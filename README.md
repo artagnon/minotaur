@@ -74,7 +74,7 @@ parallel.
 To run the Minotaur on llvm IR files in online mode, use the following
 command
 
-    $HOME/llvm/build/bin/opt -load-pass-plugin $HOME/minotaur/build/minotaur.so -passes="minotaur" <LLVM bitcode>
+    $HOME/llvm/build/bin/opt -load-pass-plugin $HOME/minotaur/build/online.so -passes="minotaur" <LLVM bitcode>
 
 For C/C++ programs, we have a drop-in replacement of C/C++ compiler.
 Users can call `minotaur-cc` or `minotaur-cxx` in the `build`
