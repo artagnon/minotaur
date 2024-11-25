@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 include(ProcessorCount)
 
 project(Minotaur)
@@ -12,11 +13,34 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_FLAGS                "-Wall -march=native -fPIC ${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG          "-g -Og ${CMAKE_CXX_FLAGS_DEBUG}")
-set(CMAKE_CXX_FLAGS_RELEASE        "-O3 ${CMAKE_CXX_FLAGS_RELEASE}")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+set(CMAKE_CXX_FLAGS                "-fPIC")
+set(CMAKE_CXX_FLAGS_DEBUG          "-g -Og")
+set(CMAKE_CXX_FLAGS_RELEASE        "-O3")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
+
+set(LLVM_ENABLE_RTTI ON CACHE BOOL "Build LLVM with RTTI")
+set(LLVM_TARGETS_TO_BUILD X86 CACHE STRING "Build only the X86 target in LLVM")
+set(LLVM_ENABLE_PROJECTS clang CACHE STRING "Build clang as well")
+set(LLVM_ENABLE_ASSERTIONS ON CACHE BOOL "Enable assertions in LLVM")
+set(BUILD_TV ON CACHE BOOL "Build alive2-tv")
+
+add_subdirectory(llvm/llvm)
+add_subdirectory(alive2)
+include_directories(alive2)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/llvm/llvm/cmake/modules")
+include(HandleLLVMOptions)
+include(AddLLVM)
+
+include_directories("${CMAKE_SOURCE_DIR}/llvm/llvm/include"
+                    "${CMAKE_BINARY_DIR}/llvm/llvm/include")
+add_definitions(${LLVM_DEFINITIONS})
+
+set(ALIVE_LIBS llvm_util ir smt tools util)
+
+message(STATUS "Found LLVM in: ${LLVM_SOURCE_DIR}")
 
 find_program(RE2C re2c)
 if (RE2C)
@@ -30,19 +54,6 @@ add_custom_command(OUTPUT "${PROJECT_BINARY_DIR}/lexer/lexer.cpp"
                    "-o" "${PROJECT_BINARY_DIR}/lexer/lexer.cpp"
                    "${PROJECT_SOURCE_DIR}/lib/lexer.re"
                    DEPENDS "lib/lexer.re")
-
-
-find_package(LLVM REQUIRED CONFIG)
-
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
-list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
-include(AddLLVM)
-
-include_directories(${LLVM_INCLUDE_DIRS})
-add_definitions(${LLVM_DEFINITIONS})
-
 
 find_package(Git REQUIRED)
 add_custom_command(
@@ -61,7 +72,7 @@ add_custom_command(
   VERBATIM
 )
 add_custom_target(
-  generate_version ALL
+  generate_version_minotaur ALL
   DEPENDS "${PROJECT_BINARY_DIR}/minotaur_gen.h"
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
@@ -70,9 +81,6 @@ include_directories(include)
 include_directories(${PROJECT_BINARY_DIR})
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-
-find_package(Alive2)
-include_directories(${ALIVE2_SOURCE_DIR})
 
 set(SYNTHESIZER_SRC
   "lib/alive-interface.cpp"
@@ -104,7 +112,7 @@ target_link_libraries(utils PRIVATE ${HIREDIS_LIBRARY})
 
 add_library(config STATIC "lib/config.cpp"
                          "${PROJECT_BINARY_DIR}/minotaur_gen.h")
-add_dependencies(config generate_version)
+add_dependencies(config generate_version_minotaur)
 
 add_library(slice STATIC "lib/slice.cpp")
 target_link_libraries(slice PRIVATE utils config)
@@ -210,7 +218,7 @@ if (NOT DEFINED TEST_NTHREADS)
   endif()
 endif()
 
-add_custom_target("check"
+add_custom_target("check-minotaur"
                   COMMAND "python3"
                           "${PROJECT_SOURCE_DIR}/tests/lit/lit.py"
                           "-s"
