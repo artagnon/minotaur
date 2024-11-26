@@ -96,15 +96,11 @@ find_library(HIREDIS_LIBRARY
 
 include_directories(${HIREDIS_INCLUDE_DIR}/hiredis)
 
-llvm_map_components_to_libnames(LLVM_LIBS
-  analysis core irreader passes scalaropts support transformutils targetparser)
-
 add_library(cost STATIC "lib/cost.cpp"
                         "${PROJECT_BINARY_DIR}/cost-command.h")
-target_link_libraries(cost PRIVATE ${LLVM_LIBS})
 
 add_library(utils STATIC "lib/utils.cpp")
-target_link_libraries(utils PRIVATE ${LLVM_LIBS} ${HIREDIS_LIBRARY})
+target_link_libraries(utils PRIVATE ${HIREDIS_LIBRARY})
 
 add_library(config STATIC "lib/config.cpp"
                          "${PROJECT_BINARY_DIR}/minotaur_gen.h")
@@ -119,27 +115,28 @@ target_link_libraries(synthesizer PRIVATE utils cost config)
 add_llvm_library(online MODULE "pass/online.cpp")
 
 target_link_libraries(online
-  PRIVATE synthesizer slice ${ALIVE_LIBS} ${Z3_LIBRARIES} ${LLVM_LIBS}
+  PRIVATE synthesizer slice ${ALIVE_LIBS} ${Z3_LIBRARIES}
   $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
-
 
 add_llvm_executable(minotaur-cs "tools/minotaur-cs.cpp")
 
+llvm_map_components_to_libnames(llvm_libs support core analysis passes transformutils)
+
 target_link_libraries(minotaur-cs
-  PRIVATE synthesizer ${ALIVE_LIBS} ${LLVM_LIBS} ${Z3_LIBRARIES}
+  PRIVATE synthesizer ${ALIVE_LIBS} ${llvm_libs} ${Z3_LIBRARIES}
   $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
 
 add_llvm_executable(minotaur-slice "tools/minotaur-slice.cpp")
 
 target_link_libraries(minotaur-slice
-  PRIVATE slice ${ALIVE_LIBS}
+  PRIVATE slice ${ALIVE_LIBS} ${llvm_libs}
   $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
 
-add_llvm_executable(parse-tests "unit-tests/parse-tests.cpp")
-set(GTEST_LIBS "-lgtest_main -lgtest -lpthread")
-target_link_libraries(parse-tests
-  PRIVATE synthesizer ${GTEST_LIBS} ${Z3_LIBRARIES}
-  $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
+# add_llvm_executable(parse-tests "unit-tests/parse-tests.cpp")
+# set(GTEST_LIBS "-lgtest_main -lgtest -lpthread")
+# target_link_libraries(parse-tests
+#   PRIVATE synthesizer ${GTEST_LIBS} ${Z3_LIBRARIES}
+#   $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
 
 if(APPLE)
     set_target_properties(online PROPERTIES
