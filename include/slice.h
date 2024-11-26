@@ -17,15 +17,16 @@ namespace minotaur {
 
 class Slice {
   llvm::Function &f;
-  llvm::LoopInfo &LI;
-  llvm::DominatorTree &DT;
+  const llvm::LoopInfo &LI;
+  const llvm::DominatorTree &DT;
 
   std::unique_ptr<llvm::Module> m;
   llvm::ValueToValueMapTy mapping;
 
 public:
-  Slice(llvm::Function &f, llvm::LoopInfo &LI, llvm::DominatorTree &DT)
-    : f(f), LI(LI), DT(DT) {
+  Slice(llvm::Function &f, const llvm::LoopInfo &LI,
+        const llvm::DominatorTree &DT)
+      : f(f), LI(LI), DT(DT) {
     m = std::make_unique<llvm::Module>("", f.getContext());
     m->setDataLayout(f.getParent()->getDataLayout());
   }

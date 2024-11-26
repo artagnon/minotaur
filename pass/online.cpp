@@ -106,7 +106,7 @@ llvm::cl::opt<bool> force_infer(
 llvm::cl::opt<string> report_dir("minotaur-report-dir",
   llvm::cl::desc("Save report to disk"), llvm::cl::value_desc("directory"));
 
-static bool dom_check(llvm::Value *V, DominatorTree &DT, llvm::Use &U) {
+static bool dom_check(llvm::Value *V, const DominatorTree &DT, llvm::Use &U) {
   if (auto I = dyn_cast<Instruction> (V)) {
     for (auto &op : I->operands()) {
       if (auto opI = dyn_cast<Instruction> (op)) {
@@ -206,8 +206,8 @@ infer(Function &F, Instruction *I, redisContext *ctx, Enumerator &EN, parse::Par
   return R;
 }
 
-static bool optimize_function(llvm::Function &F, LoopInfo &LI,
-                              DominatorTree &DT) {
+static bool optimize_function(llvm::Function &F, const LoopInfo &LI,
+                              const DominatorTree &DT) {
   // set up debug output
   raw_ostream *out_file = &errs();
   if (!report_dir.empty()) {
@@ -382,8 +382,8 @@ struct MinotaurPass : PassInfoMixin<MinotaurPass> {
     if (F.isDeclaration())
       return PreservedAnalyses::all();
 
-    LoopInfo &LI = FAM.getResult<llvm::LoopAnalysis>(F);
-    DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
+    const LoopInfo &LI = FAM.getResult<LoopAnalysis>(F);
+    const DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
     optimize_function(F, LI, DT);
     return PreservedAnalyses::all();
   }

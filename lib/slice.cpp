@@ -48,9 +48,8 @@ static bool isUnsupportedTy(llvm::Type *ty) {
          ty->isScalableTy() || vsty->isTargetExtTy() || vsty->isX86_AMXTy();
 }
 
-static bool walk(BasicBlock* current, BasicBlock* target,
-                 set<BasicBlock*> &blocks,
-                 DominatorTree &DT) {
+static bool walk(BasicBlock *current, BasicBlock *target,
+                 set<BasicBlock *> &blocks, const DominatorTree &DT) {
   auto s = [&DT](auto self,
                  BasicBlock* current,
                  BasicBlock* target,
