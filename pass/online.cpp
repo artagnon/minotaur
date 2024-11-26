@@ -410,50 +410,6 @@ final:
   return changed;
 }
 
-struct SuperoptimizerLegacyPass final : public llvm::FunctionPass {
-  static char ID;
-
-  SuperoptimizerLegacyPass() : FunctionPass(ID) {}
-
-  bool runOnFunction(llvm::Function &F) override {
-    LoopInfo &LI =
-      getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-    DominatorTree &DT =
-      getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    /*MemoryDependenceResults &MD =
-      getAnalysis<MemoryDependenceWrapperPass>().getMemDep();*/
-
-    TargetLibraryInfoWrapperPass TLI(Triple(F.getParent()->getTargetTriple()));
-
-    return optimize_function(F, LI, DT, TLI);
-  }
-
-  bool doInitialization(llvm::Module &module) override {
-    return false;
-  }
-
-  bool doFinalization(llvm::Module &) override {
-    return false;
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<TargetLibraryInfoWrapperPass>();
-    AU.addRequired<LoopInfoWrapperPass>();
-    AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<MemoryDependenceWrapperPass>();
-    AU.setPreservesAll();
-  }
-};
-
-char SuperoptimizerLegacyPass::ID = 0;
-} // namespace
-
-namespace llvm {
-RegisterPass<SuperoptimizerLegacyPass> X("so", "Superoptimizer", false, false);
-}
-
-namespace {
-
 struct SuperoptimizerPass : PassInfoMixin<SuperoptimizerPass> {
   PreservedAnalyses run(llvm::Function &F, FunctionAnalysisManager &FAM) {
     //TargetLibraryInfo &TLI = FAM.getResult<TargetLibraryAnalysis>(F);
@@ -465,14 +421,13 @@ struct SuperoptimizerPass : PassInfoMixin<SuperoptimizerPass> {
 
     LoopInfo &LI = FAM.getResult<llvm::LoopAnalysis>(F);
     DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
-    // MemoryDependenceResults &MD = FAM.getResult<MemoryDependenceAnalysis>(F);
     TargetLibraryInfoWrapperPass TLI(Triple(F.getParent()->getTargetTriple()));
     optimize_function(F, LI, DT, TLI);
     return PA;
   }
 };
 
-}// namespace
+} // namespace
 
 bool pipelineParsingCallback(StringRef Name, FunctionPassManager &FPM,
                              ArrayRef<PassBuilder::PipelineElement>) {
