@@ -1,4 +1,4 @@
-; CHECK: call half @llvm.minimum.f16(half %x, half %y)
+; CHECK: call float @llvm.minimum.f32(float %x.ext, float %y.ext)
 define half @reduce_precision(half %x, half %y) {
   %x.ext = fpext half %x to float
   %y.ext = fpext half %y to float

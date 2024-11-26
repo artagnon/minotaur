@@ -1,4 +1,8 @@
-; CHECK: changed
+; CHECK: bitcast <2 x i16> %w to <4 x i8>
+; CHECK: bitcast <2 x i16> %u to <4 x i8>
+; CHECK: add <4 x i8> %1, %2
+; CHECK: bitcast <4 x i8> %add to <2 x i16>
+; CHECK: ret <2 x i16> %ret
 define <2 x i16> @syn_add_3(<2 x i16> %w, <2 x i16> %u) {
   %x = bitcast <2 x i16> %w to <4 x i8>
   %y = bitcast <2 x i16> %u to <4 x i8>
