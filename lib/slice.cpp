@@ -533,13 +533,8 @@ Slice::extractExpr(Value &v) {
 
   sinkbb->insertInto(F);
 
-  DominatorTree FDT = DominatorTree();
-  FDT.recalculate(*F);
-  auto FLI = new LoopInfoBase<BasicBlock, Loop>();
-  FLI->analyze(FDT);
-
   // make sure sliced function is loop free.
-  if (!FLI->empty())
+  if (!LoopInfo(DominatorTree(*F)).empty())
     report_fatal_error("[slicer] a loop is generated, terminating\n");
 
   eliminate_dead_code(*F);
