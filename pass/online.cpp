@@ -206,9 +206,8 @@ infer(Function &F, Instruction *I, redisContext *ctx, Enumerator &EN, parse::Par
   return R;
 }
 
-static bool
-optimize_function(llvm::Function &F, LoopInfo &LI, DominatorTree &DT,
-                  TargetLibraryInfoWrapperPass &TLI) {
+static bool optimize_function(llvm::Function &F, LoopInfo &LI,
+                              DominatorTree &DT) {
   // set up debug output
   raw_ostream *out_file = &errs();
   if (!report_dir.empty()) {
@@ -357,13 +356,12 @@ optimize_function(llvm::Function &F, LoopInfo &LI, DominatorTree &DT,
 
 final:
   if (changed) {
-    F.removeFnAttr("min-legal-vector-width");
     eliminate_dead_code(F);
+    F.removeFnAttr("min-legal-vector-width");
   }
 
-  if (enable_caching) {
+  if (enable_caching)
     redisFree(ctx);
-  }
 
   if (changed)
     debug() << "[online] minotaur completed, changed the program\n";
@@ -379,49 +377,31 @@ final:
   return changed;
 }
 
-struct SuperoptimizerPass : PassInfoMixin<SuperoptimizerPass> {
+struct MinotaurPass : PassInfoMixin<MinotaurPass> {
   PreservedAnalyses run(llvm::Function &F, FunctionAnalysisManager &FAM) {
-    //TargetLibraryInfo &TLI = FAM.getResult<TargetLibraryAnalysis>(F);
-    PreservedAnalyses PA;
-    PA.preserveSet<CFGAnalyses>();
-
     if (F.isDeclaration())
-      return PA;
+      return PreservedAnalyses::all();
 
     LoopInfo &LI = FAM.getResult<llvm::LoopAnalysis>(F);
     DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
-    TargetLibraryInfoWrapperPass TLI(Triple(F.getParent()->getTargetTriple()));
-    optimize_function(F, LI, DT, TLI);
-    return PA;
+    optimize_function(F, LI, DT);
+    return PreservedAnalyses::all();
   }
 };
 
-} // namespace
-
-bool pipelineParsingCallback(StringRef Name, FunctionPassManager &FPM,
-                             ArrayRef<PassBuilder::PipelineElement>) {
-  if (Name == "minotaur") {
-    FPM.addPass(SuperoptimizerPass());
-    return true;
-  }
-  return false;
-}
-
-void passBuilderCallback(PassBuilder &PB) {
-  PB.registerPipelineParsingCallback(pipelineParsingCallback);
-}
-
-PassPluginLibraryInfo getMinotaurPassInfo() {
-  llvm::PassPluginLibraryInfo PPLI;
-
-  PPLI.APIVersion = LLVM_PLUGIN_API_VERSION;
-  PPLI.PluginName = "MinotaurPass";
-  PPLI.PluginVersion = LLVM_VERSION_STRING;
-  PPLI.RegisterPassBuilderCallbacks = passBuilderCallback;
-
-  return PPLI;
-}
-
 extern "C" LLVM_ATTRIBUTE_WEAK PassPluginLibraryInfo llvmGetPassPluginInfo() {
-  return getMinotaurPassInfo();
+  return {LLVM_PLUGIN_API_VERSION, "Minotaur Superoptimizer", "",
+          [](llvm::PassBuilder &PB) {
+            PB.registerPipelineParsingCallback(
+                [](llvm::StringRef Name, llvm::FunctionPassManager &FPM,
+                   llvm::ArrayRef<llvm::PassBuilder::PipelineElement>) {
+                  if (Name != "minotaur")
+                    return false;
+
+                  FPM.addPass(MinotaurPass());
+                  return true;
+                });
+          }};
 }
+
+} // end anonymous namespace
