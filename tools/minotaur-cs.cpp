@@ -3,23 +3,24 @@
 #include "alive-interface.h"
 #include "expr.h"
 
-#include "ir/type.h"
-#include "ir/instr.h"
 #include "ir/function.h"
 #include "ir/globals.h"
+#include "ir/instr.h"
+#include "ir/type.h"
+#include "llvm_util/llvm2alive.h"
 #include "smt/smt.h"
 #include "smt/solver.h"
 #include "tools/transform.h"
 #include "util/config.h"
-#include "util/symexec.h"
 #include "util/errors.h"
-#include "llvm_util/llvm2alive.h"
+#include "util/symexec.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Bitcode/BitcodeReader.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -100,7 +101,6 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
   EnableDebugBuffering = true;
-  llvm_shutdown_obj llvm_shutdown;  // Call llvm_shutdown() on exit.
   LLVMContext Context;
 
   cl::ParseCommandLineOptions(argc, argv,

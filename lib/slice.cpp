@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Utils/ValueMapper.h"
 
 #include <functional>
+#include <map>
 #include <optional>
 #include <queue>
 
@@ -44,7 +45,7 @@ static bool isUnsupportedTy(llvm::Type *ty) {
   Type *vsty = ty->getScalarType();
   return ty->isStructTy() || vsty->isPointerTy() ||
          (vsty->isFloatingPointTy() && !vsty->isIEEELikeFPTy()) ||
-         ty->isScalableTy() || vsty->isX86_MMXTy() || vsty->isX86_AMXTy();
+         ty->isScalableTy() || vsty->isTargetExtTy() || vsty->isX86_AMXTy();
 }
 
 static bool walk(BasicBlock* current, BasicBlock* target,

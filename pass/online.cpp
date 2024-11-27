@@ -351,7 +351,6 @@ optimize_function(llvm::Function &F, LoopInfo &LI, DominatorTree &DT,
         if (I.getType()->isVoidTy())
           continue;
 
-        DataLayout DL(F.getParent());
         minotaur::Slice S(F, LI, DT);
         auto NewF = S.extractExpr(I);
         auto m = S.getNewModule();
@@ -485,10 +484,6 @@ bool pipelineParsingCallback(StringRef Name, FunctionPassManager &FPM,
 
 void passBuilderCallback(PassBuilder &PB) {
   PB.registerPipelineParsingCallback(pipelineParsingCallback);
-  PB.registerVectorCombineCallback(
-      [](llvm::FunctionPassManager &FPM, llvm::OptimizationLevel) {
-        FPM.addPass(SuperoptimizerPass());
-      });
 }
 
 PassPluginLibraryInfo getMinotaurPassInfo() {

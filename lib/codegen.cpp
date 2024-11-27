@@ -5,7 +5,7 @@
 
 #include "ir/instr.h"
 
-#include "llvm/CodeGen/MachineValueType.h"
+#include "llvm/CodeGenTypes/MachineValueType.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GlobalValue.h"
@@ -115,14 +115,15 @@ LLVMGen::codeGenImpl(Inst *I, ValueToValueMapTy &VMap) {
     default: UNREACHABLE();
     }
 
-    CallInst *CI = nullptr;
+    llvm::Value *V = nullptr;
     if (K == UnaryOp::ctlz || K == UnaryOp::cttz) {
-      CI = b.CreateBinaryIntrinsic(iid, op0, b.getFalse());
+      V = b.CreateBinaryIntrinsic(iid, op0, b.getFalse());
     } else {
-      CI = b.CreateUnaryIntrinsic(iid, op0);
+      V = b.CreateUnaryIntrinsic(iid, op0);
     }
-    IntrinsicDecls.insert(CI->getCalledFunction());
-    return CI;
+    if (auto *CI = dyn_cast<CallInst>(V))
+      IntrinsicDecls.insert(CI->getCalledFunction());
+    return V;
   } else if (auto U = dynamic_cast<Copy*>(I)) {
     auto op0 = codeGenImpl(U->V(), VMap);
     return op0;
@@ -196,9 +197,10 @@ LLVMGen::codeGenImpl(Inst *I, ValueToValueMapTy &VMap) {
     default: break;
     }
     if (iid) {
-      CallInst *C = b.CreateBinaryIntrinsic(iid, op0, op1);
-      IntrinsicDecls.insert(C->getCalledFunction());
-      return C;
+      llvm::Value *V = b.CreateBinaryIntrinsic(iid, op0, op1);
+      if (auto *C = dyn_cast<CallInst>(V))
+        IntrinsicDecls.insert(C->getCalledFunction());
+      return V;
     }
 
     llvm::Value *r = nullptr;
@@ -371,7 +373,8 @@ LLVMGen::codeGenImpl(Inst *I, ValueToValueMapTy &VMap) {
       report_fatal_error("right operand width mismatch");
     op1 = bitcastTo(op1, op1_ty.toLLVM(C));
 
-    llvm::Function *decl = Intrinsic::getDeclaration(M, getIntrinsicID(B->K()));
+    llvm::Function *decl =
+        Intrinsic::getOrInsertDeclaration(M, getIntrinsicID(B->K()));
     IntrinsicDecls.insert(decl);
 
     llvm::Value *CI = CallInst::Create(decl,
@@ -433,4 +436,4 @@ llvm::Value *LLVMGen::codeGen(Inst *I, ValueToValueMapTy &VMap) {
   return codeGenImpl(I, VMap);
 }
 
-}
+} // namespace minotaur

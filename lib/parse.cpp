@@ -655,4 +655,4 @@ vector<Rewrite> Parser::parse(const llvm::Function &F, std::string_view buf) {
   }
 }
 
-}
+} // namespace parse
