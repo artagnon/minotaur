@@ -33,7 +33,7 @@ protected:
   type ty;
 public:
   type getType() { return ty; }
-  virtual void print(llvm::raw_ostream &os) const = 0;
+  virtual void print(llvm::raw_ostream &os) const override = 0;
   Value(type ty) : ty (ty) {}
 };
 
@@ -121,7 +121,7 @@ private:
 public:
   BinaryOp(Op op, Value &lhs, Value &rhs, type &workty)
   : Value(lhs.getType()), op(op), lhs(&lhs), rhs(&rhs), workty(workty) {}
-  void print(llvm::raw_ostream &os) const;
+  void print(llvm::raw_ostream &os) const override;
   Value *L() { return lhs; }
   Value *R() { return rhs; }
   Op K() { return op; }

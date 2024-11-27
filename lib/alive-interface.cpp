@@ -56,8 +56,6 @@ static expr preprocess(Transform &t, const set<expr> &qvars0,
   return expr::mkForAll(qvars, std::move(e));
 }
 
-void calculateAndInitConstants(Transform &t);
-
 namespace minotaur {
 
 bool
@@ -76,7 +74,7 @@ AliveEngine::find_model(Transform &t,
 
   t.preprocess();
   t.tgt.syncDataWithSrc(t.src);
-  ::calculateAndInitConstants(t);
+  calculateAndInitConstants(t);
 
   TransformPrintOpts print_opts;
   t.print(*debug, print_opts);
