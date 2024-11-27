@@ -377,10 +377,8 @@ LLVMGen::codeGenImpl(Inst *I, ValueToValueMapTy &VMap) {
         Intrinsic::getOrInsertDeclaration(M, getIntrinsicID(B->K()));
     IntrinsicDecls.insert(decl);
 
-    llvm::Value *CI = CallInst::Create(decl,
-                                       ArrayRef<llvm::Value *>({op0, op1}),
-                                       "intr",
-                                       cast<Instruction>(b.GetInsertPoint()));
+    llvm::Value *CI = b.CreateCall(decl->getFunctionType(), decl,
+                                   ArrayRef<llvm::Value *>({op0, op1}), "intr");
     return CI;
   // TODO: handle terop
   } else if (auto FSV = dynamic_cast<FakeShuffleInst*>(I)) {

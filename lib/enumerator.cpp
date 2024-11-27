@@ -891,9 +891,9 @@ push:
           if (!callee->getName().starts_with("__fksv"))
             continue;
 
-          auto shuf = new llvm::ShuffleVectorInst(CI->getArgOperand(0),
-                                                  CI->getArgOperand(1),
-                                                  CI->getArgOperand(2), "", CI);
+          auto shuf = new llvm::ShuffleVectorInst(
+              CI->getArgOperand(0), CI->getArgOperand(1), CI->getArgOperand(2),
+              "", CI->getIterator());
           CI->replaceAllUsesWith(shuf);
           CI->eraseFromParent();
         }

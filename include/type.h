@@ -46,8 +46,6 @@ public:
     return Scalar(128, true);
   }
 
-  type(const type &t)
-  : lane(t.getLane()), bits(t.getBits()), fp(t.isFP()) {}
   type(llvm::Type *t);
 
   bool isVector() const { return lane  > 1; }

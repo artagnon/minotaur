@@ -156,7 +156,7 @@ static type parse_type() {
 }
 
 Var *Parser::parse_var() {
-  type ty = parse_type();
+  parse_type();
   tokenizer.ensure(REGISTER);
   string id(yylval.str);
   id.erase(id.begin());
