@@ -495,7 +495,8 @@ bool Enumerator::getSketches(llvm::Value *V, vector<Sketch> &sketches) {
   }
 
   // BinaryIntrinsics
-  for (unsigned K = 0; K < X86IntrinBinOp::numOfX86Intrinsics; ++K) {
+  for (unsigned K = 0; K < sizeof(binop_shape_ret) / sizeof(*binop_shape_ret);
+       ++K) {
     if (expected.isFP())
       continue;
     // typecheck for return val

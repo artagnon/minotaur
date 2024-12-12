@@ -153,7 +153,16 @@ void FCmp::print(raw_ostream &os) const {
 }
 
 void SIMDBinOpInst::print(raw_ostream &os) const {
-  os << "(" << IR::X86IntrinBinOp::getOpName(op) << " ";
+  const char *name;
+  switch (op) {
+#define PROCESS(NAME, A, B, C, D, E, F)                                        \
+  case IR::X86IntrinBinOp::NAME:                                               \
+    name = #NAME;                                                              \
+    break;
+#include "ir/x86_intrinsics_binop.inc"
+#undef PROCESS
+  }
+  os << "(" << name << " ";
   lhs->print(os);
   os << " ";
   rhs->print(os);

@@ -4,6 +4,8 @@
 
 #include "type.h"
 
+#include "ir/instr.h"
+#include "ir/x86_intrinsics.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -13,7 +15,6 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "ir/instr.h"
 
 #include <vector>
 

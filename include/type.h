@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ir/instr.h"
+#include "ir/x86_intrinsics.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Type.h"
@@ -10,6 +11,25 @@
 #include "llvm/Support/raw_ostream.h"
 
 namespace minotaur {
+
+// the shape of a vector is stored as <# of lanes, element bits>
+static constexpr std::pair<uint8_t, uint8_t> binop_shape_op0[] = {
+#define PROCESS(NAME, A, B, C, D, E, F) std::make_pair(C, D),
+#include "ir/x86_intrinsics_binop.inc"
+#undef PROCESS
+};
+
+static constexpr std::pair<uint8_t, uint8_t> binop_shape_op1[] = {
+#define PROCESS(NAME, A, B, C, D, E, F) std::make_pair(E, F),
+#include "ir/x86_intrinsics_binop.inc"
+#undef PROCESS
+};
+
+static constexpr std::pair<uint8_t, uint8_t> binop_shape_ret[] = {
+#define PROCESS(NAME, A, B, C, D, E, F) std::make_pair(A, B),
+#include "ir/x86_intrinsics_binop.inc"
+#undef PROCESS
+};
 
 class type {
   unsigned lane, bits;

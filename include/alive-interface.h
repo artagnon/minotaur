@@ -41,4 +41,4 @@ public:
   bool compareFunctions(llvm::Function&, llvm::Function&);
 };
 
-}
+} // namespace minotaur

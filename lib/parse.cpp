@@ -477,8 +477,8 @@ FPConversion *Parser::parse_fpconv(token op_token) {
 SIMDBinOpInst *Parser::parse_x86(string_view ops) {
   IR::X86IntrinBinOp::Op op;
   #define PROCESS(NAME,A,B,C,D,E,F) if (ops == #NAME) op = IR::X86IntrinBinOp::NAME;
-  #include "ir/intrinsics_binop.h"
-  #undef PROCESS
+#include "ir/x86_intrinsics_binop.inc"
+#undef PROCESS
 
   auto a = parse_expr();
   auto b = parse_expr();
