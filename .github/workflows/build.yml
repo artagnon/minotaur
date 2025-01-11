@@ -1,65 +1,39 @@
-name: Build
+name: Unified build and test
 
 on: [push, pull_request]
 
 jobs:
   build:
-    name: ${{ matrix.os }} ${{ matrix.compiler }} ${{ matrix.build_type }} ${{ matrix.cache }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os:         [ubuntu-22.04]
-        compiler:   [g++-13, clang++-18, clang++-19]
-        build_type: [Release, Debug]
-        cache:      ['', Redis]
-        include:
-          - os: macos-14
-            compiler: clang++
-            build_type: Release
-          - os: macos-14
-            compiler: clang++
-            build_type: Debug
+    name: Minotaur unified build-and-test
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Recursive checkout
         uses: actions/checkout@v4
+        with:
+          submodules: "true"
 
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
+      - name: Free space on runner
         run: |
-          wget -O- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          if [[ ${{ matrix.compiler }} == "clang++-18" ]]; then
-            sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main"
-          fi
-          if [[ ${{ matrix.compiler }} == "clang++-19" ]]; then
-            sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy main"
-          fi
-          sudo apt-get update
-          sudo apt-get install z3 re2c ninja-build
-          if [[ ${{ matrix.compiler }} == "clang++-18" ]]; then
-            sudo apt-get install clang++-18
-          fi
-          if [[ ${{ matrix.compiler }} == "clang++-19" ]]; then
-            sudo apt-get install clang++-19
-          fi
-          if [[ "${{ matrix.cache }}" == "Redis" ]]; then
-            sudo apt-get install libhiredis-dev
-          fi
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
-      - name: Install dependencies (MacOS)
-        if: runner.os == 'macOS'
+      - name: Install dependencies
         run: |
-          brew install z3 re2c ninja
+          sudo apt update
+          sudo apt install build-essential cmake ninja-build re2c z3 libhiredis-dev redis
 
-      - name: Compile
-        run: ./.github/scripts/build.sh
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          create-symlink: true
 
-      - name: Run Tests
-        run: ninja check
+      - name: Build and test
         working-directory: build
-
-    env:
-      CMAKE_BUILD_TYPE: ${{ matrix.build_type }}
-      CMAKE_CXX_COMPILER: ${{ matrix.compiler }}
-      CMAKE_CXX_FLAGS: "-fsanitize=address,undefined"
+        run: |
+          cmake -GNinja ..
+          ninja check-llvm-unit clang
+          ninja check-alive
+          ninja check-minotaur
