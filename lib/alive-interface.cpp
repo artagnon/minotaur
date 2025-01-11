@@ -1,26 +1,14 @@
 // Copyright (c) 2020-present, author: Zhengyang Liu (liuz@cs.utah.edu).
 // Distributed under the MIT license that can be found in the LICENSE file.
 #include "alive-interface.h"
-#include "config.h"
-#include "expr.h"
 
 #include "ir/globals.h"
+#include "llvm_util/compare.h"
 #include "llvm_util/llvm2alive.h"
 #include "smt/smt.h"
-#include "util/compiler.h"
-#include "util/config.h"
 #include "util/errors.h"
 #include "util/symexec.h"
-#include "tools/transform.h"
-#include "llvm_util/compare.h"
-#include "llvm/ADT/APSInt.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Analysis/ScalarEvolutionExpressions.h"
-#include "llvm/IR/Argument.h"
-#include "llvm/Support/TypeSize.h"
 
-#include <map>
 #include <sstream>
 #include <unordered_map>
 
@@ -33,6 +21,7 @@ using namespace std;
 using namespace llvm;
 
 // borrowed from alive2
+namespace minotaur {
 static expr preprocess(Transform &t, const set<expr> &qvars0,
                        const set<expr> &undef_qvars, expr &&e) {
   if (hit_half_memory_limit())
@@ -55,8 +44,6 @@ static expr preprocess(Transform &t, const set<expr> &qvars0,
 
   return expr::mkForAll(qvars, std::move(e));
 }
-
-namespace minotaur {
 
 bool
 AliveEngine::compareFunctions(llvm::Function &Func1, llvm::Function &Func2) {
@@ -161,7 +148,7 @@ AliveEngine::find_model(Transform &t,
 
   // TODO: dom check seems redundant
   // TODO: add memory back here
-  auto r = check_expr(mk_fml(poison_cnstr && value_cnstr));
+  auto r = check_expr(mk_fml(poison_cnstr && value_cnstr), "minotaur");
 
   if (r.isInvalid()) {
     errs.add("Invalid expr", false);
@@ -315,8 +302,6 @@ AliveEngine::constantSynthesis(llvm::Function &src, llvm::Function &tgt,
       UNREACHABLE();
     }
   }
-
   return true;
 }
-
-}
+} // namespace minotaur
